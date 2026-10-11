@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gbus564-coursework"
+version = "0.1.0"
+description = "GBUS 564: Predictive Analytics — student notebooks, datasets, and shared loaders"
+readme = "README.md"
+requires-python = ">=3.12"
+# Runtime deps are only what src/gbus564_coursework imports, with loose floors,
+# so `pip install git+...` on Colab reuses the preinstalled stack instead of
+# upgrading it. The full notebook stack lives in the `notebooks` group below.
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "scikit-learn>=1.3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gbus564_coursework"]
+
+[dependency-groups]
+# Everything the notebooks import — installed by `uv sync` / `uv run` locally
+# (see default-groups); Colab already has these preinstalled.
+notebooks = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "keras>=3.15.1",
+    "matplotlib>=3.11.1",
+    "numpy>=2.3.5",
+    "pandas>=3.0.5",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.18.0",
+    "shap>=0.52.0",
+    "statsmodels>=0.14.6",
+    "tensorflow>=2.21.0",
+    "xgboost>=3.4.0",
+]
+dev = [
+    "nb-clean>=4.0.1",
+]
+
+[tool.uv]
+default-groups = ["notebooks", "dev"]
