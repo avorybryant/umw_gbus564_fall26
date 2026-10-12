@@ -13,6 +13,9 @@ def load_churn() -> pd.DataFrame:
     df = df.drop(columns="customerID")
     # 11 customers with tenure == 0 have a blank TotalCharges (no bill yet) — treat as 0.
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce").fillna(0)
+    # The source CSV stores SeniorCitizen as 0/1 while every other yes/no column is
+    # "Yes"/"No" text — match them so it's treated as categorical, not numeric.
+    df["SeniorCitizen"] = df["SeniorCitizen"].map({1: "Yes", 0: "No"})
     df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
     return df
 
