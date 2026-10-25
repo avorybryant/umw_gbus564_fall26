@@ -21,15 +21,36 @@ def load_churn() -> pd.DataFrame:
 
 
 def load_housing() -> pd.DataFrame:
-    """Ames Housing — one row per home sale, numeric target SalePrice ($)."""
+    """Ames Housing — one row per home sale, numeric target SalePrice ($).
+
+    Every blank in the source file is filled here (see the comments below),
+    so all 80 columns come back complete.
+    """
     df = pd.read_csv(_DATA_DIR / "housing" / "ames_housing.csv")
     df = df.drop(columns=["Order", "PID"])
     df.columns = df.columns.str.replace(" ", "", regex=False)
+    # MSSubClass is a dwelling-type code (20 = 1-story 1946+, 60 = 2-story
+    # 1946+, ...), not a quantity, so treat it as a category.
+    df["MSSubClass"] = df["MSSubClass"].astype(str)
     # A handful of homes have no basement/garage: the corresponding numeric
     # measurements are blank rather than 0 in the source file.
     no_feature_cols = ["TotalBsmtSF", "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF",
                         "BsmtFullBath", "BsmtHalfBath", "GarageCars", "GarageArea"]
     df[no_feature_cols] = df[no_feature_cols].fillna(0)
+    # Same story for the rest: in a text column, blank means "this home has
+    # none" (no alley, no pool, no fireplace...), so it becomes its own
+    # "None" category. No masonry veneer is 0 sq ft, and a home with no
+    # garage takes its own build year for GarageYrBlt.
+    text_cols = df.select_dtypes(exclude="number").columns
+    df[text_cols] = df[text_cols].fillna("None")
+    df["MasVnrArea"] = df["MasVnrArea"].fillna(0)
+    df["GarageYrBlt"] = df["GarageYrBlt"].fillna(df["YearBuilt"])
+    # LotFrontage is the one truly unknown value (~17% of homes): fill it
+    # with the median frontage in the home's neighborhood, or the overall
+    # median for the 3 homes whose neighborhood has none recorded.
+    df["LotFrontage"] = (df["LotFrontage"]
+                         .fillna(df.groupby("Neighborhood")["LotFrontage"].transform("median"))
+                         .fillna(df["LotFrontage"].median()))
     return df
 
 
